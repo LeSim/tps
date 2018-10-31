@@ -334,7 +334,7 @@ describe NewGestionnaire::DossiersController, type: :controller do
       let(:email) { 'emaila.com' }
 
       it { expect(response).to render_template :avis }
-      it { expect(flash.alert).to eq(["Email n'est pas valide"]) }
+      it { expect(flash.alert).to eq(["emaila.com : Email n'est pas valide"]) }
       it { expect { subject }.not_to change(Avis, :count) }
     end
   end

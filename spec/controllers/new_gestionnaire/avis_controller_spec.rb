@@ -114,7 +114,7 @@ describe NewGestionnaire::AvisController, type: :controller do
         let(:email) { "toto.fr" }
 
         it { expect(response).to render_template :instruction }
-        it { expect(flash.alert).to eq(["Email n'est pas valide"]) }
+        it { expect(flash.alert).to eq(["toto.fr : Email n'est pas valide"]) }
         it { expect(Avis.last).to eq(previous_avis) }
       end
 
