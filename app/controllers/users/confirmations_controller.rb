@@ -25,8 +25,19 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
   #   super(resource_name)
   # end
 
+  # If the user clicks the confirmation link before the maximum delay,
+  # they will be signed in directly.
+  def sign_in_after_confirmation?(resource)
+    resource.confirmed_at + 2.hours > DateTime.now
+  end
+
   # The path used after confirmation.
-  # def after_confirmation_path_for(resource_name, resource)
-  #   super(resource_name, resource)
-  # end
+  def after_confirmation_path_for(resource_name, resource)
+    if sign_in_after_confirmation?(resource)
+      sign_in resource
+      after_sign_in_path_for(resource_name)
+    else
+      super(resource_name, resource)
+    end
+  end
 end
