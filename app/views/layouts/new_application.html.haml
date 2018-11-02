@@ -25,6 +25,9 @@
       DATA = [{
         sentry: #{raw(sentry_config)}
       }];
+
+    = render partial: "layouts/matomo.html.haml"
+
   %body{ class: browser.platform.ios? ? 'ios' : nil }
     .page-wrapper
       = render partial: "layouts/outdated_browser_banner"
