@@ -141,3 +141,4 @@ La compatibilité est testée par Browserstack.
 [![View performance data on Skylight](https://badges.skylight.io/status/zAvWTaqO0mu1.svg)](https://oss.skylight.io/app/applications/zAvWTaqO0mu1)
 
 Nous utilisons Skylight pour suivre les performances de notre application.
+titi
