@@ -114,58 +114,43 @@ class ProcedureRevision < ApplicationRecord
 
   private
 
-  def compare_types_de_champ(from_types_de_champ, to_types_de_champ)
-    if from_types_de_champ != to_types_de_champ
-      stable_ids = to_types_de_champ.map(&:stable_id)
-      by_stable_id = from_types_de_champ.each_with_index.map do |type_de_champ, position|
-        [
-          type_de_champ.stable_id,
-          {
-            type_de_champ: type_de_champ,
-            position: position,
-            changes: stable_ids.include?(type_de_champ.stable_id) ? [] : [
-              {
-                op: :remove,
-                label: type_de_champ.libelle
-              }
-            ]
-          }
-        ]
-      end.to_h
+  def compare_types_de_champ(from_tdc, to_tdc)
+    if from_tdc == to_tdc
+      []
+    else
+      from_h = from_tdc.to_h { |tdc| [tdc.stable_id, tdc] }
+      to_h = to_tdc.to_h { |tdc| [tdc.stable_id, tdc] }
 
-      to_types_de_champ.each_with_index.each do |type_de_champ, position|
-        from_type_de_champ = by_stable_id[type_de_champ.stable_id]
+      from_sids = from_h.keys
+      to_sids = to_h.keys
 
-        if from_type_de_champ.present?
-          if from_type_de_champ[:position] != position
-            from_type_de_champ[:changes] << {
-              op: :move,
-              label: from_type_de_champ[:type_de_champ].libelle,
-              from: from_type_de_champ[:position],
-              to: position
-            }
-            from_type_de_champ[:position] = position
-          end
-          if from_type_de_champ[:type_de_champ] != type_de_champ
-            from_type_de_champ[:changes] += compare_type_de_champ(from_type_de_champ[:type_de_champ], type_de_champ)
-          end
-        else
-          by_stable_id[type_de_champ.stable_id] = {
-            type_de_champ: type_de_champ,
-            position: position,
-            changes: [
-              {
-                op: :add,
-                label: type_de_champ.libelle
-              }
-            ]
-          }
-        end
+      removed = (from_sids - to_sids).map do |sid|
+        { op: :remove, label: from_h[sid].libelle, position: from_sids.index(sid) }
       end
 
-      by_stable_id.sort_by { |_, value| value[:position] }.flat_map { |_, value| value[:changes] }
-    else
-      []
+      added = (to_sids - from_sids).map do |sid|
+        { op: :add, label: to_h[sid].libelle, position: to_sids.index(sid) }
+      end
+
+      kept = from_sids.intersection(to_sids)
+
+      moved = kept
+        .map { |sid| [sid, from_sids.index(sid), to_sids.index(sid)] }
+        .filter { |_, from_index, to_index| from_index != to_index }
+        .map do |sid, from_index, to_index|
+        { op: :move, label: from_h[sid].libelle, from: from_index, to: to_index, position: to_index }
+      end
+
+      changed = kept
+        .map { |sid| [sid, from_h[sid], to_h[sid]] }
+        .flat_map do |sid, from, to|
+        compare_type_de_champ(from, to)
+          .each { |h| h[:position] = to_sids.index(sid) }
+      end
+
+      (removed + added + moved + changed)
+        .sort_by { |h| h[:position] }
+        .each { |h| h.delete(:position) }
     end
   end
 
